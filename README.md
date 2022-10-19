@@ -1,0 +1,2 @@
+# 649lotto
+Simple Project
