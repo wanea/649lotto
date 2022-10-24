@@ -1,7 +1,8 @@
 module ActionFunction where
-import Function (choiceToBall, convBallToTicket, validateBall, validateYorN)
-
-import Type
+import Control.Monad.Trans.Maybe (MaybeT (..))
+import Function (addBallToTicket, choiceToBall, isFullTicket, validateBall, validateYorN)
+import System.Random ()
+import Type (Ball (Ball), Ticket (Ticket))
 --All IO Functions
 
 welcome :: IO()
@@ -15,35 +16,35 @@ welcome = do
           putStrLn "| 2 - Choose a random Ticket                          |"
           putStrLn "-------------------------------------------------------"
 
+--- selecting mode Custom Ticket or flash Ticket
 chooseMode :: IO Bool
 chooseMode = do
   validateYorN <$> getLine
 
-chooseTxtBall :: Int -> IO ()
-chooseTxtBall num = putStr $ "Choice ball Number " ++ show num ++ " : "
+readChoiceT ::MaybeT IO (Ball Int)
+readChoiceT = MaybeT $ do
+    print "Choose a ball [1-49]: "
+    mInt <- validateBall <$> getLine
+    case mInt of
+        Nothing    -> print "Not valid entry or already choosed " >>  runMaybeT  readChoiceT
+        (Just int) -> pure $ choiceToBall mInt
 
---readChoice :: IO (Maybe Int)
-readChoice :: IO (Maybe (Ticket (Ball Int)))
-readChoice = do
-  convBallToTicket . choiceToBall . validateBall <$> getLine
+addBallT :: MaybeT IO (Ticket (Ball Int)) -> MaybeT IO (Ticket (Ball Int))
+addBallT mTicketT =  do
+  bool <- isFullTicketT mTicketT
+  if bool
+    then mTicketT
+  else do
+    ticket <- mTicketT
+    aBall <-  readChoiceT
+    addBallT (addBallToTicket aBall <$> mTicketT)
 
-wantTicket :: Maybe (Ticket (Ball Int)) -> IO (Maybe (Ticket (Ball Int)))
-wantTicket mTicket = do
-      if enought <= 6
-        then
-          do
-          chooseTxtBall enought
-          addBallToTicket mTicket
-        else pure mTicket
-      where enought = 1 + (length.getTicket) ticket
-            (Just ticket) = mTicket
+isFullTicketT ::MaybeT IO (Ticket (Ball Int)) ->MaybeT IO Bool
+isFullTicketT = fmap isFullTicket
 
-addBallToTicket ::Maybe (Ticket (Ball Int)) -> IO (Maybe (Ticket (Ball Int)))
-addBallToTicket mTicket =  do
-          add <- readChoice
-          case mTicket of
-            (Just x) -> wantTicket $ mTicket <> add
-            Nothing  -> wantTicket add
 
-randTicket :: IO (Maybe (Ticket (Ball Int)))
-randTicket = (pure.pure) (Ticket [Ball 6,Ball 8,Ball 49, Ball 27, Ball 8, Ball 34])
+randTicket :: MaybeT IO (Ticket (Ball Int))
+randTicket = pure (Ticket [Ball 6,Ball 42,Ball 49, Ball 27, Ball 8, Ball 34])
+
+randTicket' ::MaybeT IO  (Ticket (Ball Int))
+randTicket' = pure (Ticket [Ball 45,Ball 33,Ball 49, Ball 18, Ball 8, Ball 34])

@@ -3,7 +3,7 @@ module Type where
 
 newtype Ball a = Ball {
                       getBall:: a
-                      }
+                      } deriving Eq
 newtype Ticket a = Ticket {
                       getTicket :: [a]
                       }
@@ -11,7 +11,7 @@ newtype Ticket a = Ticket {
 
 instance Show a => Show (Ball a)  where
   show :: Ball a -> String
-  show ball = "Ball Number :" ++ show (getBall ball) ++ ", "
+  show ball = "( Ball " ++ show (getBall ball) ++ " ) "
 
 instance Show a => Show (Ticket a) where
   show :: Ticket a -> String
@@ -19,6 +19,7 @@ instance Show a => Show (Ticket a) where
     where listBalls = getTicket ticket
           myTicket []     = ""
           myTicket (x:xs) = show x ++ myTicket xs
+
 
 instance Functor Ball where
   fmap :: (a->b) -> Ball a -> Ball b
@@ -46,9 +47,14 @@ instance Applicative Ticket where
 
 instance Monad Ticket where
   (>>=) :: Ticket a -> (a-> Ticket b) -> Ticket b
+  (Ticket []) >>= _ = Ticket []
   (Ticket list) >>= f =  f x <> (Ticket xs >>= f)
       where (x:xs) = list
 
 instance Semigroup (Ticket a) where
   (<>) :: Ticket a -> Ticket a -> Ticket a
   (Ticket x) <> (Ticket y) = Ticket (x<>y)
+
+instance Num a => Semigroup (Ball a) where
+  (<>) :: Ball a -> Ball a -> Ball a
+  (Ball x) <> (Ball y) = Ball (x+y)

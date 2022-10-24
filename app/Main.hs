@@ -1,18 +1,8 @@
 module Main where
-import ActionFunction
-import Function
-import Type
-
-
--- scenario control
-
-aBall :: Ball Int
-aBall = Ball 5
-
-aTicket :: Ticket (Ball Int)
-aTicket = Ticket [Ball 6,Ball 8,Ball 49, Ball 27, Ball 8, Ball 34]
-eTicket :: Maybe (Ticket a)
-eTicket = Just $ Ticket []
+import ActionFunction (addBallT, chooseMode, randTicket, randTicket', welcome)
+import Control.Monad.Trans.Maybe (MaybeT (runMaybeT))
+import Function (checkIfWin)
+import Type (Ball (Ball), Ticket (Ticket))
 
 main :: IO ()
 main = do
@@ -20,16 +10,56 @@ main = do
     way <- chooseMode
     if way  then
                 do
-                x <- wantTicket eTicket
-                putStrLn "This is your Ticket : NEED TO CHECK REDONDUNCY"
-                print x
+                myTicket <- runMaybeT $ addBallT emptyTicketT
+                putStrLn $ "The Random ticket is  : " ++ show myTicket
+                winnerTicket <- runMaybeT randTicket
+                putStrLn $ "The Winning ticket is : " ++ show winnerTicket
+                let lst = checkIfWin myTicket winnerTicket
+                putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
+                print lst
+
             else
                 do
-                putStrLn "The crash is comming"
-                x <- randTicket
-                putStrLn "This is your random ticket : TO DO "
-                print x
-    putStrLn "The Winning ticket is : "
-    winnerTicket <- randTicket
-    print winnerTicket
+                myTicket <- runMaybeT randTicket'
+                putStrLn $ "The Random ticket is  : " ++ show myTicket
+                winnerTicket <- runMaybeT randTicket
+                putStrLn $ "The Winning ticket is : " ++ show winnerTicket
+                let lst = checkIfWin myTicket winnerTicket
+                putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
+                print lst
 
+
+
+----------------  Variable de test ------------
+
+aBall :: Ball Int
+aBall = Ball 5
+aBall' :: Ball Int
+aBall' = Ball 60
+mBall ::Maybe (Ball Int)
+mBall = Just $ Ball 5
+mBall' ::Maybe (Ball Int)
+mBall' = Just $ Ball 1
+
+aTicket :: Ticket (Ball Int)
+aTicket = Ticket [Ball 1,Ball 2, Ball 3, Ball 4,Ball 5]
+aTicket' :: Ticket (Ball Int)
+aTicket' = Ticket [Ball 1,Ball 2, Ball 3, Ball 4,Ball 5,Ball 6]
+saTicket :: Ticket (Ball Int)
+saTicket = Ticket [Ball 5]
+emptyTicket :: Ticket (Ball Int)
+emptyTicket = Ticket []
+eTicket :: Maybe (Ticket a)
+eTicket = Just $ Ticket []
+mTicket :: Maybe (Ticket (Ball Int))
+mTicket = Just $ Ticket [Ball 1,Ball 2,Ball 3, Ball 4, Ball 6, Ball 8]
+mTicket1 :: Maybe (Ticket (Ball Int))
+mTicket1 = Just $ Ticket [Ball 23,Ball 3, Ball 4, Ball 6, Ball 8]
+eTicketT :: MaybeT IO (Ticket (Ball Int))
+eTicketT = pure aTicket
+emptyTicketT :: MaybeT IO (Ticket (Ball Int))
+emptyTicketT = pure emptyTicket
+fullTicketT :: MaybeT IO (Ticket (Ball Int))
+fullTicketT = pure aTicket'
+aTicketT :: MaybeT IO (Ticket (Ball Int))
+aTicketT = pure aTicket

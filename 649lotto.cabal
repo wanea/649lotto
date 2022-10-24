@@ -58,11 +58,15 @@ executable 649lotto
                      ,Function
                      ,ActionFunction
 
+                     
+
     -- LANGUAGE extensions used by modules in this package.
     default-extensions: InstanceSigs
 
     -- Other library packages from which modules are imported.
     build-depends:    base ^>=4.14.3.0
+                     ,transformers
+                     ,random
                      
 
     -- Directories containing source files.
