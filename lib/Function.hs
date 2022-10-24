@@ -1,9 +1,11 @@
 module Function where
 import Data.Char (isNumber, toLower)
-import Data.List (sort)
+import Data.List
+import System.Random
 import Type (Ball (..), Ticket (..))
 
 validateYorN:: String -> Bool
+validateYorN "" = False
 validateYorN str
           | isNumber x && x == '1' = True
           | otherwise   = False
@@ -41,10 +43,10 @@ choiceToBall ::Maybe Int -> Maybe (Ball Int)
 choiceToBall = maybe Nothing (pure . pure)
 
 isFullTicket :: Ticket a -> Bool
-isFullTicket mTicket
+isFullTicket ticket
           | len < 6 = False
           |otherwise = True
-          where len = length $ getTicket  mTicket
+          where (Just len) = lengthOfTicket (Just ticket)
 
 lengthOfTicket :: Maybe (Ticket a) ->Maybe Int
 lengthOfTicket mTicket = length <$> (getTicket <$> mTicket)
@@ -58,3 +60,5 @@ checkIfWin myTicket winTicket = do
 sortListBall :: [Ball Int] -> [Ball Int]
 sortListBall xs = Ball <$> sorted
       where sorted = sort  $ fmap getBall xs
+
+
