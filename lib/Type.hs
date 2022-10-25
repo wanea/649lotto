@@ -8,7 +8,6 @@ newtype Ticket a = Ticket {
                       getTicket :: [a]
                       }
 
-
 instance Show a => Show (Ball a)  where
   show :: Ball a -> String
   show ball = "( Ball " ++ show (getBall ball) ++ " ) "
@@ -20,7 +19,6 @@ instance Show a => Show (Ticket a) where
           myTicket []     = ""
           myTicket (x:xs) = show x ++ myTicket xs
 
-
 instance Functor Ball where
   fmap :: (a->b) -> Ball a -> Ball b
   fmap f (Ball a) = Ball (f a)
@@ -30,10 +28,6 @@ instance Applicative Ball where
   pure  = Ball
   (<*>):: Ball (a->b) -> Ball a -> Ball b
   f <*> ball = fmap (getBall f) ball
-
-instance Monad Ball where
-  (>>=) :: Ball a -> (a-> Ball b) -> Ball b
-  x >>= f = f $ getBall x
 
 instance Functor Ticket where
   fmap :: (a->b) -> Ticket a -> Ticket b
@@ -45,16 +39,12 @@ instance Applicative Ticket where
   (<*>) :: Ticket (a->b) -> Ticket a -> Ticket b
   (Ticket f) <*> (Ticket x) = Ticket $ f <*> x
 
-instance Monad Ticket where
-  (>>=) :: Ticket a -> (a-> Ticket b) -> Ticket b
-  (Ticket []) >>= _ = Ticket []
-  (Ticket list) >>= f =  f x <> (Ticket xs >>= f)
-      where (x:xs) = list
-
 instance Semigroup (Ticket a) where
   (<>) :: Ticket a -> Ticket a -> Ticket a
   (Ticket x) <> (Ticket y) = Ticket (x<>y)
 
+
+--- USELESS
 instance Num a => Semigroup (Ball a) where
   (<>) :: Ball a -> Ball a -> Ball a
   (Ball x) <> (Ball y) = Ball (x+y)

@@ -57,8 +57,7 @@ executable 649lotto
     other-modules:    Type
                      ,Function
                      ,ActionFunction
-
-                     
+                     ,DataTest
 
     -- LANGUAGE extensions used by modules in this package.
     default-extensions: InstanceSigs
@@ -68,7 +67,6 @@ executable 649lotto
                      ,transformers
                      ,random
                      
-
     -- Directories containing source files.
     hs-source-dirs:   app
                      ,lib
