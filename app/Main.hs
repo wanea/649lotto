@@ -1,7 +1,7 @@
 module Main where
-import ActionFunction (chooseMode, randTicket, wantTicket, welcome, welcomeChooseMode,
-                       welcomeCustomMode, welcomeRandomMode, winTicket)
-import Control.Monad.Trans.Maybe (MaybeT (runMaybeT))
+import ActionFunction
+import Control.Monad.Trans.State
+import DataTest
 import Function (checkIfWin)
 
 main :: IO ()
@@ -17,9 +17,10 @@ main' = do
 
 customMode :: IO ()
 customMode = do
-                myTicket <- runMaybeT wantTicket
+
+                myTicket <-  wantTicket
                 putStrLn $ "Your custom ticket is : " ++ show myTicket
-                winnerTicket <- runMaybeT randTicket
+                winnerTicket <-  randTicket
                 putStrLn $ "The Winning ticket is : " ++ show winnerTicket
                 let lst = checkIfWin myTicket winnerTicket
                 putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
@@ -27,9 +28,9 @@ customMode = do
 
 randomMode :: IO ()
 randomMode = do
-                myTicket <- runMaybeT randTicket
+                myTicket <- randTicket
                 putStrLn $ "The Random ticket is  : " ++ show myTicket
-                winnerTicket <- runMaybeT winTicket
+                winnerTicket <- winTicket
                 putStrLn $ "The Winning ticket is : " ++ show winnerTicket
                 let lst = checkIfWin myTicket winnerTicket
                 putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
