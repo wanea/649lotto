@@ -7,6 +7,7 @@ newtype Ball a = Ball {
 newtype Ticket a = Ticket {
                       getTicket :: [a]
                       }
+type Credit = Int
 
 instance Show a => Show (Ball a)  where
   show :: Ball a -> String

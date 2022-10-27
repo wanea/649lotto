@@ -44,11 +44,9 @@ isFullTicket ticket
 lengthOfTicket :: Maybe (Ticket a) ->Maybe Int
 lengthOfTicket mTicket = length <$> (getTicket <$> mTicket)
 
-checkIfWin :: Maybe (Ticket (Ball Int)) -> Maybe (Ticket (Ball Int)) -> [Ball Int]
-checkIfWin myTicket winTicket = do
-  let (Just mylist) = fmap  getTicket myTicket
-  let (Just winlist) = fmap  getTicket winTicket
-  sortListBall [ x | x<- mylist , x `elem` winlist ]
+checkIfWin :: Ticket (Ball Int) -> Ticket (Ball Int) -> [Ball Int]
+checkIfWin (Ticket mylist) (Ticket winlist) =
+  sortListBall [ x | x <- mylist , x `elem` winlist ]
 
 sortListBall :: [Ball Int] -> [Ball Int]
 sortListBall xs = Ball <$> sorted

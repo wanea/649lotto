@@ -1,8 +1,14 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant lambda" #-}
+{-# HLINT ignore "Redundant bracket" #-}
 module ActionFunction where
-import Control.Monad.Trans.Maybe (MaybeT (..))
-import Function (addBallToTicket, choiceToBall, isFullTicket, validateBall, validateYorN)
-import System.Random (randomRIO)
-import Type (Ball (Ball), Ticket (Ticket))
+import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.State
+import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, validateBall,
+                 validateYorN)
+import System.Random
+import Type (Ball (Ball), Credit, Ticket (Ticket))
 --All IO Functions
 
 welcome :: IO()
@@ -21,7 +27,7 @@ welcomeRandomMode = do
 
 welcomeChooseMode :: IO ()
 welcomeChooseMode = do
-  putStrLn "-------------------------------------------------------"
+  putStrLn " "
   putStr   "Custom [1] or Random [2] (default) : "
 
 
@@ -31,51 +37,86 @@ chooseMode :: IO Bool
 chooseMode = do
   validateYorN <$> getLine
 
-emptyTicketT :: MaybeT IO (Ticket (Ball Int))
-emptyTicketT = pure $ Ticket []
+emptyTicket :: Ticket (Ball Int)
+emptyTicket = Ticket []
 
-readChoiceT ::MaybeT IO (Ball Int)
-readChoiceT = MaybeT $ do
+readChoice :: IO (Ball Int)
+readChoice = do
     print "Choose a ball [1-49]: "
     mInt <- validateBall <$> getLine
     case mInt of
         Nothing    -> print "Not valid entry :"
-                      >>  runMaybeT  readChoiceT
-        (Just int) -> pure $ choiceToBall mInt
+                      >> readChoice
+        (Just int) -> pure $ Ball int
 
-randChoiceT :: MaybeT IO (Ball Int)
-randChoiceT = MaybeT $ do
-        num <- randomRIO (1,49)
-        pure $ Just (Ball num)
+randChoice :: IO (Ball Int)
+randChoice = do
+  num <- randomRIO (1,49)
+  pure $ Ball num
 
-addBallT :: MaybeT IO (Ticket (Ball Int)) -> MaybeT IO (Ticket (Ball Int))
-addBallT mTicketT =  do
-  bool <- isFullTicketT mTicketT
-  if bool
-    then  mTicketT
+randChoice' :: IO (Ball Int)
+randChoice' = do
+  num <- randomRIO (1,49)
+  pure $ Ball num
+
+addBall :: Ticket (Ball Int) -> IO (Ticket (Ball Int))
+addBall ticket =  do
+  if isFullTicket ticket
+    then pure ticket
   else do
-    ticket <- mTicketT
-    aBall <-  readChoiceT
-    addBallT (addBallToTicket aBall <$> mTicketT)
+    aBall <- readChoice
+    addBall (addBallToTicket aBall ticket)
 
-addBallTRand :: MaybeT IO (Ticket (Ball Int)) -> MaybeT IO (Ticket (Ball Int))
-addBallTRand mTicketT =  do
-  bool <- isFullTicketT mTicketT
-  if bool
-    then  mTicketT
+addBallRand :: Ticket (Ball Int) -> IO (Ticket (Ball Int))
+addBallRand ticket =  do
+  if isFullTicket ticket
+    then pure ticket
   else do
-    ticket <- mTicketT
-    aBall <-  randChoiceT
-    addBallTRand (addBallToTicket aBall <$> mTicketT)
+    aBall <- randChoice
+    addBallRand (addBallToTicket aBall ticket)
 
-isFullTicketT ::MaybeT IO (Ticket (Ball Int)) ->MaybeT IO Bool
-isFullTicketT = fmap isFullTicket
+wantTicket :: IO (Ticket (Ball Int))
+wantTicket = addBall emptyTicket
 
-wantTicket :: MaybeT IO (Ticket (Ball Int))
-wantTicket = addBallT emptyTicketT
+randTicket :: IO (Ticket (Ball Int))
+randTicket = addBallRand emptyTicket
 
-randTicket :: MaybeT IO (Ticket (Ball Int))
-randTicket = addBallTRand emptyTicketT
-
-winTicket ::MaybeT IO  (Ticket (Ball Int))
+winTicket :: IO (Ticket (Ball Int))
 winTicket = randTicket
+
+--withCredit :: StateT Credit IO (Ticket (Ball Int))
+--withCredit  = StateT $ do (\c -> (a , c))
+minus1 :: Int -> Int
+minus1 x = x-1
+
+makeState :: StateT Credit IO (Ticket (Ball Int))
+makeState = StateT  (\input -> do
+    pure (Ticket [], input )
+    )
+
+--takeState :: StateT Credit IO (Ticket(Ball Int)) ->IO Credit
+--takeState (StateT ps) =(\input -> do
+--                                  (_,s0) <- (ps input)
+--                                  s0
+--  )
+
+playState :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
+playState ps = StateT (\input ->  do
+  ticket <- randTicket
+  ( _ , s1) <- runStateT ps input
+  putStrLn $ "The Random ticket is  : " ++ show ticket
+  winnerTicket <- winTicket
+  putStrLn $ "The Winning ticket is : " ++ show winnerTicket
+  let lst = checkIfWin ticket winnerTicket
+  putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
+  putStrLn $ "remaining credit : " ++ (show (minus1 s1))
+  pure (ticket , minus1 s1)
+  )
+
+
+enougthCredit ::StateT Credit IO (Ticket (Ball Int)) -> IO Bool
+enougthCredit ps =  undefined
+
+
+
+
