@@ -1,14 +1,8 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Redundant lambda" #-}
-{-# HLINT ignore "Redundant bracket" #-}
 module ActionFunction where
-import Control.Monad.IO.Class (MonadIO (liftIO))
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.State
-import Control.Monad.Trans.State (runState)
+
+import Control.Monad.Trans.State (StateT (..))
 import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, validateBall,
                  validateBall', validateYorN)
-import System.Posix.Internals (puts)
 import System.Random (randomRIO)
 import Type (Ball (Ball), Credit, Ticket (Ticket))
 {-=============================================================================

@@ -1,7 +1,7 @@
 module Function where
-import Data.Char (GeneralCategory (NotAssigned), isNumber, toLower)
+
+import Data.Char (isNumber)
 import Data.List (sort)
-import DataTest
 import Type (Ball (..), Ticket (..))
 
 validateYorN:: String -> Bool
@@ -72,4 +72,3 @@ checkIfWin (Ticket mylist) (Ticket winlist) =
 sortListBall :: [Ball Int] -> [Ball Int]
 sortListBall xs = Ball <$> sorted
       where sorted = sort  $ fmap getBall xs
-

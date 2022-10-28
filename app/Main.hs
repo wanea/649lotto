@@ -1,8 +1,7 @@
 module Main where
-import ActionFunction
-import Control.Monad.Trans.State
-import DataTest
-import Function (checkIfWin)
+import ActionFunction (chooseMode, gameLottoPlayC, gameLottoPlayR, playLottoC, playLottoR,
+                       startCredit, welcome, welcomeChooseMode, welcomeCustomMode,
+                       welcomeRandomMode)
 
 main :: IO ()
 main = do
