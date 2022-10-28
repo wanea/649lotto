@@ -20,6 +20,27 @@ validateBall str
         where convInt = read str
               validRange = convInt > 0 && convInt < 50
 
+validateBall':: String ->IO (Maybe Int)
+validateBall' str
+    | num && range = pure mInt
+    | num && not range = print "Not in Range" >> pure  Nothing
+    | not num && range = print "Not a Number" >> pure Nothing
+    |otherwise = pure Nothing
+      where (Just num, Just range) = (validateNum' str,validateRange' str)
+            mInt = read str
+
+validateRange' :: String -> Maybe Bool
+validateRange' ""  = Nothing
+validateRange' str = pure $ convInt > 0 && convInt < 50
+    where convInt = read str
+
+validateNum' :: String -> Maybe Bool
+validateNum' ""                  = Nothing
+validateNum' str
+  | convInt > 0 && convInt < 50 = Just True
+  | otherwise                   = Just False
+     where convInt = read str
+
 isNum :: [Char] -> Bool
 isNum ""     = True
 isNum (x:xs) = isNumber x && isNum xs

@@ -5,12 +5,15 @@ module ActionFunction where
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import Control.Monad.Trans.State (runState)
 import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, validateBall,
-                 validateYorN)
-import System.Random
+                 validateBall', validateYorN)
+import System.Posix.Internals (puts)
+import System.Random (randomRIO)
 import Type (Ball (Ball), Credit, Ticket (Ticket))
---All IO Functions
-
+{-=============================================================================
+=                          Printable Function
+==============================================================================-}
 welcome :: IO()
 welcome = do
   putStrLn "-------------------------------------------------------"
@@ -30,13 +33,38 @@ welcomeChooseMode = do
   putStrLn " "
   putStr   "Custom [1] or Random [2] (default) : "
 
+printWinTicket :: Ticket (Ball Int) -> IO ()
+printWinTicket ticket = do
+  putStrLn $ "The Winning ticket is : " ++ show ticket
 
+printRandomTicket :: Ticket (Ball Int) -> IO ()
+printRandomTicket ticket = do
+  putStrLn "------------------------------------------------"
+  putStrLn $ "The Random ticket is  : " ++ show ticket
 
---- selecting mode Custom Ticket or flash Ticket
+printCustomTicket :: Ticket (Ball Int) -> IO ()
+printCustomTicket ticket = do
+  putStrLn $ "Your custom ticket is : " ++ show ticket
+  putStrLn "------------------------------------------------"
+
+printBallFound :: [Ball Int] -> IO ()
+printBallFound xs = do
+  putStrLn ""
+  putStrLn $ "You find " ++ show (length xs) ++ " Ball(s) : "
+  putStrLn ""
+
+printCredit :: Credit -> IO()
+printCredit c = do
+  putStrLn $ show c ++ " Credit remaining !"
+{-=============================================================================
+=                           Game Control Function
+==============================================================================-}
 chooseMode :: IO Bool
 chooseMode = do
   validateYorN <$> getLine
-
+{-=============================================================================
+=                               Game Function
+==============================================================================-}
 emptyTicket :: Ticket (Ball Int)
 emptyTicket = Ticket []
 
@@ -83,40 +111,68 @@ randTicket = addBallRand emptyTicket
 
 winTicket :: IO (Ticket (Ball Int))
 winTicket = randTicket
-
---withCredit :: StateT Credit IO (Ticket (Ball Int))
---withCredit  = StateT $ do (\c -> (a , c))
-minus1 :: Int -> Int
-minus1 x = x-1
-
-makeState :: StateT Credit IO (Ticket (Ball Int))
-makeState = StateT  (\input -> do
-    pure (Ticket [], input )
+{-=============================================================================
+=                      All StateT  function
+==============================================================================-}
+startCredit :: StateT Credit IO (Ticket a)
+startCredit = StateT  (\_ -> do
+    pure ( Ticket [] , 3 )
     )
 
---takeState :: StateT Credit IO (Ticket(Ball Int)) ->IO Credit
---takeState (StateT ps) =(\input -> do
---                                  (_,s0) <- (ps input)
---                                  s0
---  )
+addCredit ::Int -> StateT Credit IO (Ticket a) -> StateT Credit IO (Ticket a)
+addCredit c ps = StateT  (\input -> do
+    (ps', input ) <- runStateT ps input
+    pure (ps', input + c )
+    )
 
-playState :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
-playState ps = StateT (\input ->  do
-  ticket <- randTicket
-  ( _ , s1) <- runStateT ps input
-  putStrLn $ "The Random ticket is  : " ++ show ticket
-  winnerTicket <- winTicket
-  putStrLn $ "The Winning ticket is : " ++ show winnerTicket
-  let lst = checkIfWin ticket winnerTicket
-  putStr $ "You found " ++ show (length lst) ++ " Number(s) : "
-  putStrLn $ "remaining credit : " ++ (show (minus1 s1))
-  pure (ticket , minus1 s1)
+getCredit :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
+getCredit rt = StateT (\input ->
+   do
+    (rt' ,cred) <- runStateT rt input
+    pure (rt' , cred )
   )
 
+playLottoR :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
+playLottoR ps = StateT (\input ->  do
+  rTicket <- randTicket
+  wTicket <- winTicket
+  let xs = checkIfWin rTicket wTicket
+  printRandomTicket rTicket
+  printWinTicket wTicket
+  printBallFound xs
+  ( _ , s1) <- runStateT ps input
+  pure (rTicket ,s1 - 1)
+  )
 
-enougthCredit ::StateT Credit IO (Ticket (Ball Int)) -> IO Bool
-enougthCredit ps =  undefined
+playLottoC :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
+playLottoC ps = StateT (\input ->  do
+  rTicket <- wantTicket
+  wTicket <- winTicket
+  let xs = checkIfWin rTicket wTicket
+  printRandomTicket rTicket
+  printWinTicket wTicket
+  printBallFound xs
+  ( _ , s1) <- runStateT ps input
+  pure (rTicket ,s1 - 1)
+  )
 
+gameLottoPlayR ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
+gameLottoPlayR ps = do
+  (x, y) <- runStateT ps 0
+  printCredit y
+  if y > 0
+    then gameLottoPlayR $ playLottoR ps
+    else print "GAME OVER"
+  pure() -- or return, which makes more sense ?
 
+gameLottoPlayC ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
+gameLottoPlayC ps = do
+  (x, y) <- runStateT ps 0
+  printCredit y
+  print $ "Etat :::::::::::: " ++ show y
+  if y > 0
+    then gameLottoPlayC  ps
+    else print "GAME OVER"
+  pure() -- or return, which makes more sense ?
 
 
