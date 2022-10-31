@@ -1,10 +1,12 @@
 module ActionFunction where
 
-import Control.Monad.Trans.State (StateT (..))
-import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, validateBall,
-                 validateBall', validateYorN)
+import Control.Monad.Trans.State (StateT (..), runState)
+import Data.List (sort)
+import DataTest
+import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, sortedTicket,
+                 validateBall, validateBall', validateYorN)
 import System.Random (randomRIO)
-import Type (Ball (Ball), Credit, Ticket (Ticket))
+import Type
 {-=============================================================================
 =                          Printable Function
 ==============================================================================-}
@@ -44,12 +46,15 @@ printCustomTicket ticket = do
 printBallFound :: [Ball Int] -> IO ()
 printBallFound xs = do
   putStrLn ""
-  putStrLn $ "You find " ++ show (length xs) ++ " Ball(s) : "
+  putStrLn $ "You find " ++ show (length xs) ++ " Ball(s) : " ++ show xs
   putStrLn ""
 
 printCredit :: Credit -> IO()
 printCredit c = do
-  putStrLn $ show c ++ " Credit remaining !"
+  putStrLn $ "/!\\================================ [ " ++ show c ++ " ] Credit remaining !"
+
+gameOver  :: IO()
+gameOver = putStrLn "---------/!\\ GAME OVER /!\\---------"
 {-=============================================================================
 =                           Game Control Function
 ==============================================================================-}
@@ -76,15 +81,10 @@ randChoice = do
   num <- randomRIO (1,49)
   pure $ Ball num
 
-randChoice' :: IO (Ball Int)
-randChoice' = do
-  num <- randomRIO (1,49)
-  pure $ Ball num
-
 addBall :: Ticket (Ball Int) -> IO (Ticket (Ball Int))
 addBall ticket =  do
   if isFullTicket ticket
-    then pure ticket
+    then pure (sortedTicket ticket)
   else do
     aBall <- readChoice
     addBall (addBallToTicket aBall ticket)
@@ -92,81 +92,99 @@ addBall ticket =  do
 addBallRand :: Ticket (Ball Int) -> IO (Ticket (Ball Int))
 addBallRand ticket =  do
   if isFullTicket ticket
-    then pure ticket
+    then pure (sortedTicket ticket)
   else do
     aBall <- randChoice
-    addBallRand (addBallToTicket aBall ticket)
+    addBallRand $ addBallToTicket aBall ticket
 
-wantTicket :: IO (Ticket (Ball Int))
-wantTicket = addBall emptyTicket
+wantTicket  :: IO (Ticket (Ball Int))
+wantTicket  = addBall emptyTicket
 
-randTicket :: IO (Ticket (Ball Int))
-randTicket = addBallRand emptyTicket
+randTicket  :: IO (Ticket (Ball Int))
+randTicket  = addBallRand emptyTicket
 
-winTicket :: IO (Ticket (Ball Int))
-winTicket = randTicket
+winTicket   :: IO (Ticket (Ball Int))
+winTicket   = randTicket
 {-=============================================================================
 =                      All StateT  function
 ==============================================================================-}
-startCredit :: StateT Credit IO (Ticket a)
-startCredit = StateT  (\_ -> do
-    pure ( Ticket [] , 3 )
-    )
+startCredit  :: StateT Credit IO (Ticket a)
+startCredit   = StateT  (\_ -> do pure ( Ticket [] , 3 ))
+startCredit' :: StateT Credit IO Int
+startCredit'  = StateT  (\_ -> do pure ( 0 , 3 ))
 
-addCredit ::Int -> StateT Credit IO (Ticket a) -> StateT Credit IO (Ticket a)
+addCredit :: Int -> StateT Credit IO a -> StateT Credit IO  a
 addCredit c ps = StateT  (\input -> do
     (ps', input ) <- runStateT ps input
+    print $ "CREDIT ADDED "++ show c
     pure (ps', input + c )
     )
 
-getCredit :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
-getCredit rt = StateT (\input ->
-   do
-    (rt' ,cred) <- runStateT rt input
-    pure (rt' , cred )
+sub1Credit :: StateT Credit IO a -> StateT Credit IO a
+sub1Credit ps = StateT (\cred -> do
+  (ps', cred) <- runStateT ps cred
+  pure (ps', cred - 1)
   )
 
-playLottoR :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
-playLottoR ps = StateT (\input ->  do
+discover :: Ticket (Ball Int) -> IO ()
+discover ticket = do
+  wTicket <- winTicket
+  printWinTicket wTicket
+  printBallFound $ checkIfWin ticket wTicket
+discover' :: Ticket (Ball Int) -> IO Int
+discover' ticket = do
+  wTicket <- winTicket
+  printWinTicket wTicket
+  let xs = checkIfWin ticket wTicket
+  printBallFound xs
+  pure $ length xs
+
+playLottoR ::  IO ()
+playLottoR  =  do
   rTicket <- randTicket
-  wTicket <- winTicket
-  let xs = checkIfWin rTicket wTicket
   printRandomTicket rTicket
-  printWinTicket wTicket
-  printBallFound xs
-  ( _ , s1) <- runStateT ps input
-  pure (rTicket ,s1 - 1)
-  )
-
-playLottoC :: StateT Credit IO (Ticket (Ball Int)) -> StateT Credit IO (Ticket (Ball Int))
-playLottoC ps = StateT (\input ->  do
-  rTicket <- wantTicket
-  wTicket <- winTicket
-  let xs = checkIfWin rTicket wTicket
+  discover rTicket
+  return()
+playLottoR' :: IO Int
+playLottoR'  =  do
+  rTicket <- randTicket
   printRandomTicket rTicket
-  printWinTicket wTicket
-  printBallFound xs
-  ( _ , s1) <- runStateT ps input
-  pure (rTicket ,s1 - 1)
-  )
+  discover' rTicket
 
 gameLottoPlayR ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
 gameLottoPlayR ps = do
   (x, y) <- runStateT ps 0
   printCredit y
   if y > 0
-    then gameLottoPlayR $ playLottoR ps
-    else print "GAME OVER"
-  pure() -- or return, which makes more sense ?
+    then playLottoR >> gameLottoPlayR (sub1Credit ps)
+    else gameOver
+  return()
+gameLottoPlayR' ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
+gameLottoPlayR' ps = do
+  (x, y) <- runStateT ps 0
+  printCredit y
+  if y > 0
+    then do
+      wCred <- playLottoR'
+      (_, aCred) <- runStateT (addCredit wCred ps) 0
+      (_, sCred) <- runStateT  (sub1Credit ps) 0
+      let nState = StateT  (\_ -> do pure ( x , aCred + sCred))
+      gameLottoPlayR nState
+    else gameOver
+  return()
+
+playLottoC :: IO()
+playLottoC  = do
+  cTicket <- wantTicket
+  printCustomTicket cTicket
+  discover cTicket
+  return()
 
 gameLottoPlayC ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
 gameLottoPlayC ps = do
   (x, y) <- runStateT ps 0
   printCredit y
-  print $ "Etat :::::::::::: " ++ show y
   if y > 0
-    then gameLottoPlayC  ps
-    else print "GAME OVER"
-  pure() -- or return, which makes more sense ?
-
-
+    then  playLottoC >> gameLottoPlayC (sub1Credit ps)
+    else gameOver
+  return()

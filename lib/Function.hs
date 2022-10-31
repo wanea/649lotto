@@ -69,6 +69,9 @@ checkIfWin :: Ticket (Ball Int) -> Ticket (Ball Int) -> [Ball Int]
 checkIfWin (Ticket mylist) (Ticket winlist) =
   sortListBall [ x | x <- mylist , x `elem` winlist ]
 
+sortedTicket ::  Ticket (Ball Int) -> Ticket (Ball Int)
+sortedTicket ticket = Ticket $ Ball <$> sort (getBall <$> getTicket ticket)
+
 sortListBall :: [Ball Int] -> [Ball Int]
 sortListBall xs = Ball <$> sorted
       where sorted = sort  $ fmap getBall xs

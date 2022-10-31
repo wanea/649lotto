@@ -1,7 +1,9 @@
 module Main where
-import ActionFunction (chooseMode, gameLottoPlayC, gameLottoPlayR, playLottoC, playLottoR,
-                       startCredit, welcome, welcomeChooseMode, welcomeCustomMode,
-                       welcomeRandomMode)
+import ActionFunction (addCredit, chooseMode, gameLottoPlayC, gameLottoPlayR, gameLottoPlayR',
+                       playLottoC, playLottoR, startCredit, welcome, welcomeChooseMode,
+                       welcomeCustomMode, welcomeRandomMode)
+import Control.Monad.Trans.State
+import Type
 
 main :: IO ()
 main = do
@@ -16,14 +18,10 @@ mode = do
 
 customMode :: IO ()
 customMode = do
-                let init = playLottoC  startCredit
-                let lottoC = gameLottoPlayC init
-                lottoC >> mode
+                gameLottoPlayC startCredit >> mode
 
 randomMode :: IO ()
 randomMode = do
-                let init = playLottoR  startCredit
-                let lottoR = gameLottoPlayR init
-                lottoR >> mode
+                gameLottoPlayR startCredit >> mode
 
 

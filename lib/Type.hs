@@ -9,6 +9,8 @@ newtype Ticket a = Ticket {
                       }
 type Credit = Int
 
+type Gain = Credit
+
 instance Show a => Show (Ball a)  where
   show :: Ball a -> String
   show ball = "( Ball " ++ show (getBall ball) ++ " ) "
