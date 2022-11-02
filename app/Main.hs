@@ -1,7 +1,7 @@
 module Main where
-import ActionFunction (addCredit, chooseMode, gameLottoPlayC, gameLottoPlayR, gameLottoPlayR',
-                       playLottoC, playLottoR, startCredit, welcome, welcomeChooseMode,
-                       welcomeCustomMode, welcomeRandomMode)
+import ActionFunction (addCredit, chooseMode, gameLottoPlayC, gameLottoPlayR, playLottoC,
+                       startCredit, welcome, welcomeChooseMode, welcomeCustomMode,
+                       welcomeRandomMode)
 import Control.Monad.Trans.State
 import Type
 

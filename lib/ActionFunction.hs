@@ -110,81 +110,65 @@ winTicket   = randTicket
 ==============================================================================-}
 startCredit  :: StateT Credit IO (Ticket a)
 startCredit   = StateT  (\_ -> do pure ( Ticket [] , 3 ))
-startCredit' :: StateT Credit IO Int
-startCredit'  = StateT  (\_ -> do pure ( 0 , 3 ))
 
-addCredit :: Int -> StateT Credit IO a -> StateT Credit IO  a
-addCredit c ps = StateT  (\input -> do
-    (ps', input ) <- runStateT ps input
-    print $ "CREDIT ADDED "++ show c
-    pure (ps', input + c )
+addCredit :: StateT Credit IO a -> StateT Credit IO  a
+addCredit  ps = StateT  (\input -> do
+    (ps', input' ) <- runStateT ps input
+    print $ "CREDIT ADDED "++ show input
+    pure (ps', input+input' )
     )
 
 sub1Credit :: StateT Credit IO a -> StateT Credit IO a
 sub1Credit ps = StateT (\cred -> do
-  (ps', cred) <- runStateT ps cred
-  pure (ps', cred - 1)
+  (ps', cred') <- runStateT ps cred
+  pure (ps', cred' - 1)
   )
 
-discover :: Ticket (Ball Int) -> IO ()
+manageCredit :: StateT Credit IO a -> StateT Credit IO a
+manageCredit  =  addCredit . sub1Credit
+
+discover :: Ticket (Ball Int) -> IO Int
 discover ticket = do
-  wTicket <- winTicket
-  printWinTicket wTicket
-  printBallFound $ checkIfWin ticket wTicket
-discover' :: Ticket (Ball Int) -> IO Int
-discover' ticket = do
   wTicket <- winTicket
   printWinTicket wTicket
   let xs = checkIfWin ticket wTicket
   printBallFound xs
   pure $ length xs
 
-playLottoR ::  IO ()
+playLottoR :: IO Int
 playLottoR  =  do
   rTicket <- randTicket
   printRandomTicket rTicket
   discover rTicket
-  return()
-playLottoR' :: IO Int
-playLottoR'  =  do
-  rTicket <- randTicket
-  printRandomTicket rTicket
-  discover' rTicket
 
 gameLottoPlayR ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
 gameLottoPlayR ps = do
   (x, y) <- runStateT ps 0
   printCredit y
   if y > 0
-    then playLottoR >> gameLottoPlayR (sub1Credit ps)
-    else gameOver
-  return()
-gameLottoPlayR' ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
-gameLottoPlayR' ps = do
-  (x, y) <- runStateT ps 0
-  printCredit y
-  if y > 0
     then do
-      wCred <- playLottoR'
-      (_, aCred) <- runStateT (addCredit wCred ps) 0
-      (_, sCred) <- runStateT  (sub1Credit ps) 0
-      let nState = StateT  (\_ -> do pure ( x , aCred + sCred))
+      wCred <- playLottoR
+      (_, aCred) <- runStateT (manageCredit ps) wCred
+      let nState = StateT  (\_ -> do pure ( x , aCred))
       gameLottoPlayR nState
     else gameOver
   return()
 
-playLottoC :: IO()
+playLottoC :: IO Int
 playLottoC  = do
   cTicket <- wantTicket
   printCustomTicket cTicket
   discover cTicket
-  return()
 
 gameLottoPlayC ::StateT Credit IO (Ticket (Ball Int)) -> IO ()
 gameLottoPlayC ps = do
   (x, y) <- runStateT ps 0
   printCredit y
   if y > 0
-    then  playLottoC >> gameLottoPlayC (sub1Credit ps)
+    then  do
+      wCred <- playLottoC
+      (_, aCred) <- runStateT (manageCredit ps) wCred
+      let nState = StateT  (\_ -> do pure ( x , aCred))
+      gameLottoPlayC nState
     else gameOver
   return()
