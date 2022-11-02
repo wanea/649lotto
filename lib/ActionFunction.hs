@@ -1,12 +1,10 @@
 module ActionFunction where
 
-import Control.Monad.Trans.State (StateT (..), runState)
-import Data.List (sort)
-import DataTest
-import Function (addBallToTicket, checkIfWin, choiceToBall, isFullTicket, sortedTicket,
-                 validateBall, validateBall', validateYorN)
+import Control.Monad.Trans.State (StateT (..))
+import Function (addBallToTicket, checkIfWin, isFullTicket, sortedTicket, validateBall,
+                 validateYorN)
 import System.Random (randomRIO)
-import Type
+import Type (Ball (Ball), Credit, Ticket (Ticket))
 {-=============================================================================
 =                          Printable Function
 ==============================================================================-}

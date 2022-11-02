@@ -1,9 +1,6 @@
 module Main where
-import ActionFunction (addCredit, chooseMode, gameLottoPlayC, gameLottoPlayR, playLottoC,
-                       startCredit, welcome, welcomeChooseMode, welcomeCustomMode,
-                       welcomeRandomMode)
-import Control.Monad.Trans.State
-import Type
+import ActionFunction (chooseMode, gameLottoPlayC, gameLottoPlayR, startCredit, welcome,
+                       welcomeChooseMode, welcomeCustomMode, welcomeRandomMode)
 
 main :: IO ()
 main = do

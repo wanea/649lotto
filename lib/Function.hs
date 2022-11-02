@@ -20,6 +20,7 @@ validateBall str
         where convInt = read str
               validRange = convInt > 0 && convInt < 50
 
+--- improving this three function
 validateBall':: String ->IO (Maybe Int)
 validateBall' str
     | num && range = pure mInt
@@ -40,6 +41,8 @@ validateNum' str
   | convInt > 0 && convInt < 50 = Just True
   | otherwise                   = Just False
      where convInt = read str
+------          END
+
 
 isNum :: [Char] -> Bool
 isNum ""     = True
