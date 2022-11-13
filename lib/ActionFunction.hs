@@ -49,7 +49,7 @@ printBallFound xs = do
 
 printCredit :: Credit -> IO()
 printCredit c = do
-  putStrLn $ "/!\\================================ [ " ++ show c ++ " ] Credit remaining !"
+  putStrLn $ "[ " ++ show c ++ " ] Credit remaining !"
 
 gameOver  :: IO()
 gameOver = putStrLn "---------/!\\ GAME OVER /!\\---------"
@@ -67,10 +67,10 @@ emptyTicket = Ticket []
 
 readChoice :: IO (Ball Int)
 readChoice = do
-    print "Choose a ball [1-49]: "
+    print "Choose a ball between 1 and 49 : "
     mInt <- validateBall <$> getLine
     case mInt of
-        Nothing    -> print "Not valid entry :"
+        Nothing    -> print "Invalid entry : "
                       >> readChoice
         (Just int) -> pure $ Ball int
 
@@ -78,6 +78,7 @@ randChoice :: IO (Ball Int)
 randChoice = do
   num <- randomRIO (1,49)
   pure $ Ball num
+
 
 addBall :: Ticket (Ball Int) -> IO (Ticket (Ball Int))
 addBall ticket =  do
@@ -112,7 +113,7 @@ startCredit   = StateT  (\_ -> do pure ( Ticket [] , 3 ))
 addCredit :: StateT Credit IO a -> StateT Credit IO  a
 addCredit  ps = StateT  (\input -> do
     (ps', input' ) <- runStateT ps input
-    print $ "CREDIT ADDED "++ show input
+    print $ show input ++ " CREDIT ADDED "
     pure (ps', input+input' )
     )
 

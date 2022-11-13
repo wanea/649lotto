@@ -1,15 +1,9 @@
 module Type where
 --all type i need to define
 
-newtype Ball a = Ball {
-                      getBall:: a
-                      } deriving Eq
-newtype Ticket a = Ticket {
-                      getTicket :: [a]
-                      }
+newtype Ball a = Ball {getBall:: a} deriving Eq
+newtype Ticket a = Ticket {getTicket :: [a]}
 type Credit = Int
-
-type Gain = Credit
 
 instance Show a => Show (Ball a)  where
   show :: Ball a -> String
@@ -46,8 +40,12 @@ instance Semigroup (Ticket a) where
   (<>) :: Ticket a -> Ticket a -> Ticket a
   (Ticket x) <> (Ticket y) = Ticket (x<>y)
 
+instance Foldable Ticket where
+  foldr :: (a->b->b) -> b -> Ticket a  -> b
+  foldr _ i (Ticket [])     = i
+  foldr f i (Ticket (x:xs)) =  f x (foldr f i xs )
 
---- USELESS
+--- Useless now
 instance Num a => Semigroup (Ball a) where
   (<>) :: Ball a -> Ball a -> Ball a
   (Ball x) <> (Ball y) = Ball (x+y)

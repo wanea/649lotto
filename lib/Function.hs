@@ -11,7 +11,7 @@ validateYorN str
           | otherwise   = False
           where (x:xs) = str
 
--- check if input have all requirement
+-- check if input have all requirements
 validateBall :: String -> Maybe Int
 validateBall "" = Nothing
 validateBall str
@@ -19,6 +19,45 @@ validateBall str
           | otherwise = Nothing
         where convInt = read str
               validRange = convInt > 0 && convInt < 50
+
+isNum :: [Char] -> Bool
+isNum ""     = True
+isNum (x:xs) = isNumber x && isNum xs
+
+addBallToTicket :: Ball Int -> Ticket (Ball Int) -> Ticket (Ball Int)
+addBallToTicket ball ticket
+          | ballIsPresent ball ticket = ticket
+          | otherwise = pure ball <> ticket
+
+ballIsPresent :: Ball Int -> Ticket (Ball Int) -> Bool
+ballIsPresent b t = b `elem` getTicket t
+
+choiceToBall ::Maybe Int -> Maybe (Ball Int)
+choiceToBall = maybe Nothing (pure . pure)
+
+isFullTicket :: Ticket a -> Bool
+isFullTicket ticket
+          | len < 6 = False
+          |otherwise = True
+          where (Just len) = lengthOfTicket (Just ticket)
+
+lengthOfTicket :: Maybe ( Ticket a) ->Maybe Int
+lengthOfTicket mTicket = length <$> (getTicket <$> mTicket)
+
+checkIfWin :: Ticket (Ball Int) -> Ticket (Ball Int) -> [Ball Int]
+checkIfWin (Ticket mylist) (Ticket winlist) =
+  sortListBall [ x | x <- mylist , x `elem` winlist ]
+
+sortedTicket ::  Ticket (Ball Int) -> Ticket (Ball Int)
+sortedTicket ticket = Ticket $ Ball <$> sort (getBall <$> getTicket ticket)
+
+sortListBall :: [Ball Int] -> [Ball Int]
+sortListBall xs = Ball <$> sorted
+      where sorted = sort  $ fmap getBall xs
+
+
+
+
 
 --- improving this three function
 validateBall':: String ->IO (Maybe Int)
@@ -42,39 +81,3 @@ validateNum' str
   | otherwise                   = Just False
      where convInt = read str
 ------          END
-
-
-isNum :: [Char] -> Bool
-isNum ""     = True
-isNum (x:xs) = isNumber x && isNum xs
-
-addBallToTicket :: Ball Int -> Ticket (Ball Int) -> Ticket (Ball Int)
-addBallToTicket ball ticket
-          | ballIsPresent ball ticket = ticket
-          | otherwise = pure ball <> ticket
-
-ballIsPresent :: Ball Int -> Ticket (Ball Int) -> Bool
-ballIsPresent b t = b `elem` getTicket t
-
-choiceToBall ::Maybe Int -> Maybe (Ball Int)
-choiceToBall = maybe Nothing (pure . pure)
-
-isFullTicket :: Ticket a -> Bool
-isFullTicket ticket
-          | len < 6 = False
-          |otherwise = True
-          where (Just len) = lengthOfTicket (Just ticket)
-
-lengthOfTicket :: Maybe (Ticket a) ->Maybe Int
-lengthOfTicket mTicket = length <$> (getTicket <$> mTicket)
-
-checkIfWin :: Ticket (Ball Int) -> Ticket (Ball Int) -> [Ball Int]
-checkIfWin (Ticket mylist) (Ticket winlist) =
-  sortListBall [ x | x <- mylist , x `elem` winlist ]
-
-sortedTicket ::  Ticket (Ball Int) -> Ticket (Ball Int)
-sortedTicket ticket = Ticket $ Ball <$> sort (getBall <$> getTicket ticket)
-
-sortListBall :: [Ball Int] -> [Ball Int]
-sortListBall xs = Ball <$> sorted
-      where sorted = sort  $ fmap getBall xs
